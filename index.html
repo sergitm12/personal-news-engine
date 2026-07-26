@@ -1699,7 +1699,16 @@ function trackClick(title) {
 /* --- RSS Config  --- */
 const FEEDS = [
   { section: 'Silicon & Microarchitecture', key: 'silicon', accent: '#5E6AD2', baseQ: 'semiconductor OR lithography OR TSMC', direct: 'https://spectrum.ieee.org/rss/index.xml' },
-  { section: 'Systems & Software Engineering', key: 'software', accent: '#E4F222', baseQ: '"React Native" OR "WebAssembly"', direct: 'https://lwn.net/river/user?rss=1' },
+  {
+    section: 'Systems & Software Engineering',
+    key: 'software',
+    accent: '#E4F222',
+    urls: [
+      'https://dev.to/feed',
+      'https://hnrss.org/newest?q=software+OR+engineering+OR+linux',
+      'https://news.google.com/rss/search?q=React+Native+OR+WebAssembly+OR+Linux+kernel&hl=en-US&gl=US&ceid=US:en'
+    ]
+  },
   { section: 'Enterprise & Local Automation', key: 'automation', accent: '#d97757', baseQ: '"Home Assistant" OR "Matter protocol"', direct: 'https://www.home-assistant.io/atom.xml' },
   { section: 'Macro Tech & Semiconductor Markets', key: 'markets', accent: '#788c5d', baseQ: 'semiconductor earnings OR tech capex', direct: 'https://semiwiki.com/feed/' }
 ];
@@ -1937,7 +1946,9 @@ async function fetchColumnWithRetry(feed, colIndex, hasCache, attempt) {
         if (processed && processed.length > 0) {
           rawItems = rawItems.concat(processed);
           success = true;
-          break; // Successfully loaded from this URL, no need to check further backups!
+          if (rawItems.length >= 10) {
+            break; // Successfully loaded enough articles, no need to check further backups!
+          }
         }
       } catch (urlErr) {
         lastError = urlErr;
