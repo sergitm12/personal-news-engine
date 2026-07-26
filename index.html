@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+<head>
+
+
+
+  <meta charset="UTF-8" />
+
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+
+
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+
+
+  <title>TechPulse  Technical Intelligence Dashboard</title>
+
+
+
+  <meta name="description" content="High-density technical news dashboard. Silicon, Systems, IoT, Markets." />
+
+
+
+  
+
+
+
+  <!-- Inline PWA Manifest -->
+
+
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ccircle cx='50' cy='50' r='25' fill='%2310b981'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ccircle cx='50' cy='50' r='25' fill='%2310b981'/%3E%3C/svg%3E" />
+
+
+
+
+
+
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+
+
+  
+
+
+
+  <style>
+
+
+
+    /* --- Design tokens  --- */
+
+
+
+    :root {
+
+
+
+      --bg:            #08090A;
+
+
+
+      --surface:       #0F1012;
+
+
+
+      --surface-hover: #12131A;
+
+
+
+      --surface-2:     #0A0B0C;
+
+
+
+      --border:        #1E2023;
+
+
+
+      --border-hover:  #5E6AD2;
+
+
+
+      --text-primary:  #D0D6E0;
+
+
+
+      --text-muted:    #525252;
+
+
+
+      --text-dim:      #3A3D44;
+
+
+
+      --accent-blue:   #5E6AD2;
+
+
+
+      --accent-yellow: #E4F222;
+
+
+
+      --accent-orange: #d97757;
+
+
+
+      --accent-sage:   #788c5d;
+
+
+
+      --fresh-green:   #4ade80;
+
+
+
+    }
+
+
+
+
+
+
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+
+
+    body {
+
+
+
+      background: var(--bg);
+
+
+
+      color: var(--text-primary);
+
+
+
+      font-family: 'Inter', sans-serif;
+
+
+
+      margin: 0;
+
+
+
+      min-height: 100vh;
+
+
+
+      overflow-x: hidden;
+
+
+
+      -webkit-tap-highlight-color: transparent;
+
+
+
+    }
+
+
+
+
+
+
+
+    /* --- Animations  --- */
+
+
+
+    @keyframes ping  { 75%, 100% { transform: scale(2.2); opacity: 0; } }
+
+
+
+    @keyframes pulse { 0%, 100%  { opacity: 1; } 50% { opacity: 0.35; } }
+
+
+
+    @keyframes spin  { to { transform: rotate(360deg); } }
+
+
+
+    .anim-ping  { animation: ping  1.4s cubic-bezier(0,0,.2,1) infinite; }
+
+
+
+    .anim-pulse { animation: pulse 2.2s cubic-bezier(.4,0,.6,1) infinite; }
+
+
+
+    .anim-spin  { animation: spin 1s linear infinite; }
+
+
+
+
+
+
+
+    /* --- Layout chrome  --- */
+
+
+
+    #topbar     { display: flex; align-items: center; justify-content: space-between; padding: 11px 20px; border-bottom: 1px solid var(--border); background: var(--bg); gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; }
+
+
+
+    #statusbar  { display: flex; align-items: center; gap: 20px; padding: 5px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); flex-wrap: wrap; }
+
+
+
+    #filterbar  { display: none; align-items: center; gap: 10px; padding: 5px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+
+
+
+    #filterbar.visible { display: flex; }
+
+
+
+
+
+
+
+    /* --- Bento grid  --- */
+
+
+
+    .bento-col { background: var(--bg); display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+
+
+
+    
+
+
+
+    .loading-state { padding: 40px; text-align: center; color: var(--accent-blue); font-family: ui-monospace, monospace; font-size: 12px; grid-column: 1 / -1; }
+
+
+
+
+
+
+
+    /* --- Section header  --- */
+
+
+
+    .section-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1px solid var(--border); margin-bottom: 1px; background: var(--surface-2); }
+
+
+
+    .section-dot    { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+
+
+    .section-label  { font-size: 10px; font-family: ui-monospace, monospace; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; }
+
+
+
+
+
+
+
+    /* --- Cards  --- */
+
+
+
+    .cards-stack { display: flex; flex-direction: column; gap: 1px; }
+
+
+
+    .news-card {
+
+
+
+      position: relative; display: flex; flex-direction: column; gap: 10px;
+
+
+
+      padding: 15px 15px 13px;
+
+
+
+      border: 1px solid var(--border);
+
+
+
+      background: var(--surface);
+
+
+
+      transition: border-color .13s, background-color .13s, opacity .2s;
+
+
+
+      cursor: pointer;
+
+
+
+    }
+
+
+
+    .news-card:hover { border-color: var(--border-hover); background: var(--surface-hover); }
+
+
+
+    .news-card.is-hidden { display: none; }
+
+
+
+
+
+
+
+    /* Left accent bar */
+
+
+
+    .accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--accent-blue); opacity: 0; transition: opacity .13s; pointer-events: none; }
+
+
+
+    .news-card:hover .accent-bar { opacity: 1; }
+
+
+
+
+
+
+
+    /* --- Card internals  --- */
+
+
+
+    .card-top { display: flex; align-items: center; gap: 6px; }
+
+
+
+    .source-badge {
+
+
+
+      font-size: 9.5px; font-family: ui-monospace, monospace; letter-spacing: .1em;
+
+
+
+      text-transform: uppercase; padding: 2px 6px; flex-shrink: 0;
+
+
+
+      color: var(--accent-blue); border: 1px solid #1E2A4A; background: #0A0B14;
+
+
+
+      text-decoration: none; transition: background .1s;
+
+
+
+    }
+
+
+
+    .source-badge:hover { background: #141B2E; }
+
+
+
+
+
+
+
+    .ts-group  { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+
+
+
+    .timestamp { font-family: ui-monospace, monospace; font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+
+
+
+
+
+
+    .bookmark-btn {
+
+
+
+      background: none; border: none; cursor: pointer; padding: 1px 3px;
+
+
+
+      color: var(--text-muted); font-size: 13px; line-height: 1; flex-shrink: 0;
+
+
+
+      transition: color .12s, transform .12s;
+
+
+
+    }
+
+
+
+    .bookmark-btn:hover        { color: var(--accent-yellow); transform: scale(1.15); }
+
+
+
+    .bookmark-btn.is-bookmarked { color: var(--accent-yellow); }
+
+
+
+
+
+
+
+    /* Fresh indicator */
+
+
+
+    .fresh-wrap { position: relative; width: 8px; height: 8px; flex-shrink: 0; }
+
+
+
+    .fresh-core, .fresh-ring { position: absolute; inset: 0; border-radius: 50%; }
+
+
+
+    .fresh-core.live  { background: var(--fresh-green); }
+
+
+
+    .fresh-core.stale { background: #3A3D44; }
+
+
+
+    .fresh-ring { background: var(--fresh-green); opacity: .65; }
+
+
+
+
+
+
+
+    /* Title */
+
+
+
+    .card-title-link { text-decoration: none; }
+
+
+
+    .card-title {
+
+
+
+      font-size: 13.5px; font-weight: 500; line-height: 1.38;
+
+
+
+      color: #F1F5F9; transition: color .13s; margin: 0;
+
+
+
+    }
+
+
+
+    .news-card.is-read .card-title { color: #94A3B8; font-weight: 400; }
+
+
+
+    .card-title-link:hover .card-title { color: #FFFFFF; text-decoration: underline; text-decoration-color: var(--border-hover); text-underline-offset: 3px; }
+
+
+
+
+
+
+
+    /* Summary / takeaway */
+
+
+
+    .card-summary {
+
+
+
+      font-size: 11.5px; line-height: 1.6; color: #737373; margin: 0;
+
+
+
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+
+
+
+      pointer-events: none;
+
+
+
+    }
+
+
+
+    .card-takeaway {
+
+
+
+      display: none; font-size: 11.5px; line-height: 1.5;
+
+
+
+      color: #A3A3A3; margin: 0; padding-left: 10px;
+
+
+
+      border-left: 2px solid var(--accent-blue);
+
+
+
+      pointer-events: none;
+
+
+
+    }
+
+
+
+    body.focus-mode .card-summary  { display: none; }
+
+
+
+    body.focus-mode .card-takeaway { display: block; }
+
+
+
+
+
+
+
+    /* Tags */
+
+
+
+    .tags { display: flex; flex-wrap: wrap; gap: 3px; padding-top: 1px; }
+
+
+
+    .tag-btn {
+
+
+
+      font-size: 9.5px; font-family: ui-monospace, monospace; letter-spacing: .04em;
+
+
+
+      padding: 2px 5px; color: #5A6070; background: #0A0A0A; border: 1px solid #1C1E22;
+
+
+
+      cursor: pointer; transition: color .1s, border-color .1s, background .1s;
+
+
+
+    }
+
+
+
+    .tag-btn:hover     { color: var(--accent-blue); border-color: #2A3358; background: #0A0B14; }
+
+
+
+    .tag-btn.is-active { color: var(--accent-blue); border-color: var(--accent-blue); background: #0A0B14; }
+
+
+
+
+
+
+
+    /* --- Header controls  --- */
+
+
+
+    #clock {
+
+
+
+      font-family: ui-monospace, monospace; font-size: 11px; font-variant-numeric: tabular-nums;
+
+
+
+      padding: 4px 9px; border: 1px solid var(--border); color: var(--accent-blue); white-space: nowrap;
+
+
+
+    }
+
+
+
+    .pill-btn {
+
+
+
+      font-family: ui-monospace, monospace; font-size: 9.5px; letter-spacing: .12em;
+
+
+
+      text-transform: uppercase; padding: 5px 12px; border-radius: 9999px;
+
+
+
+      border: none; cursor: pointer; transition: background .13s, color .13s;
+
+
+
+    }
+
+
+
+    #focus-btn { background: #E5E5E6; color: #08090A; }
+
+
+
+    #focus-btn:hover { background: #CFCFD0; }
+
+
+
+    #focus-btn.is-active { background: var(--accent-yellow); color: #08090A; }
+
+
+
+    #drawer-open-btn { background: #141516; color: #D0D6E0; border: 1px solid #2A2D32; }
+
+
+
+    #drawer-open-btn:hover { background: #1C1F24; }
+
+
+
+    .icon-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; transition: color .15s; }
+
+
+
+    .icon-btn:hover { color: var(--text-primary); }
+
+
+
+
+
+
+
+    /* Filter bar */
+
+
+
+    .filter-pill-label { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-muted); }
+
+
+
+    .filter-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; background: #0A0B14; border: 1px solid var(--accent-blue); font-size: 10px; font-family: ui-monospace, monospace; color: var(--accent-blue); }
+
+
+
+    .filter-pill-x { background: none; border: none; color: var(--accent-blue); cursor: pointer; font-size: 13px; line-height: 1; padding: 0; }
+
+
+
+    .filter-pill-x:hover { color: #fff; }
+
+
+
+
+
+
+
+    /* Status bar */
+
+
+
+    .stat-item { font-size: 10px; font-family: ui-monospace, monospace; color: var(--text-muted); white-space: nowrap; }
+
+
+
+    .stat-val  { font-variant-numeric: tabular-nums; }
+
+
+
+
+
+
+
+    /*  Modals / Drawers  */
+
+
+
+    .overlay {
+
+
+
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 90;
+
+
+
+      backdrop-filter: blur(3px); transition: opacity .2s;
+
+
+
+    }
+
+
+
+    .overlay.is-open { display: block; }
+
+
+
+    
+
+
+
+    /* Bookmark Drawer */
+
+
+
+    #bookmark-drawer {
+
+
+
+      position: fixed; top: 0; right: 0; width: 340px; max-width: 92vw; height: 100vh;
+
+
+
+      background: #0D0E10; border-left: 1px solid var(--border);
+
+
+
+      transform: translateX(100%); transition: transform .2s ease;
+
+
+
+      z-index: 100; display: flex; flex-direction: column; overflow: hidden;
+
+
+
+    }
+
+
+
+    #bookmark-drawer.is-open { transform: translateX(0); }
+
+
+
+    .drawer-hdr {
+
+
+
+      display: flex; align-items: center; justify-content: space-between; padding: 13px 16px;
+
+
+
+      border-bottom: 1px solid var(--border); background: var(--surface-2); flex-shrink: 0;
+
+
+
+    }
+
+
+
+    .drawer-title { font-size: 10px; font-family: ui-monospace, monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-yellow); }
+
+
+
+    .drawer-x { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 0; }
+
+
+
+    .drawer-x:hover { color: var(--text-primary); }
+
+
+
+    #drawer-list { overflow-y: auto; flex: 1; padding: 6px; }
+
+
+
+    .drawer-item { padding: 10px 12px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 1px; cursor: pointer; transition: border-color .12s; }
+
+
+
+    .drawer-item:hover { border-color: var(--border-hover); }
+
+
+
+    .drawer-item-src   { font-size: 9px; font-family: ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 4px; }
+
+
+
+    .drawer-item-title { font-size: 12px; font-weight: 500; color: var(--text-primary); line-height: 1.35; }
+
+
+
+    .drawer-empty { padding: 28px 16px; text-align: center; font-size: 10.5px; font-family: ui-monospace, monospace; color: var(--text-muted); line-height: 1.7; }
+
+
+
+
+
+
+
+    /* Centered Modals (Settings & AI Deep Dive) */
+
+
+
+    .modal-box {
+
+
+
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+
+
+
+      background: var(--surface); border: 1px solid var(--border);
+
+
+
+      width: 90vw; max-width: 600px; max-height: 85vh;
+
+
+
+      z-index: 100; display: none; flex-direction: column; opacity: 0;
+
+
+
+      transition: opacity 0.2s, transform 0.2s;
+
+
+
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+
+
+
+    }
+
+
+
+    .modal-box.is-open { display: flex; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+
+
+    .modal-hdr {
+
+
+
+      display: flex; align-items: center; justify-content: space-between;
+
+
+
+      padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2);
+
+
+
+    }
+
+
+
+    .modal-title { font-size: 12px; font-weight: 600; color: var(--text-primary); font-family: ui-monospace, monospace; letter-spacing: .05em; }
+
+
+
+    .modal-body { padding: 20px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: var(--text-primary); }
+
+
+
+    
+
+
+
+    /* Inputs */
+
+
+
+    .input-field {
+
+
+
+      width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+
+
+
+      color: var(--text-primary); font-family: ui-monospace, monospace; font-size: 12px;
+
+
+
+      margin-top: 8px; margin-bottom: 16px; outline: none;
+
+
+
+    }
+
+
+
+    .input-field:focus { border-color: var(--accent-blue); }
+
+
+
+    .btn-primary {
+
+
+
+      background: var(--accent-blue); color: #fff; border: none; padding: 8px 16px;
+
+
+
+      font-size: 12px; font-weight: 500; cursor: pointer;
+
+
+
+    }
+
+
+
+    .btn-primary:hover { background: #4a54ab; }
+
+
+
+
+
+
+
+    /* AI Deep Dive Content */
+
+
+
+    .dive-section { margin-bottom: 20px; }
+
+
+
+    .dive-section h4 { color: var(--accent-yellow); font-family: ui-monospace, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; margin: 0 0 8px 0; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+
+
+
+    .dive-section p { margin: 0 0 10px 0; color: #D0D6E0; }
+
+
+
+    .dive-loader { display: flex; align-items: center; gap: 10px; color: var(--accent-blue); font-family: ui-monospace, monospace; font-size: 12px; padding: 20px 0; }
+
+
+
+
+
+
+
+    footer { border-top: 1px solid var(--border); }
+
+
+
+
+
+
+
+    /* Scrollbar */
+
+
+
+    ::-webkit-scrollbar { width: 4px; }
+
+
+
+    ::-webkit-scrollbar-track { background: transparent; }
+
+
+
+    ::-webkit-scrollbar-thumb { background: #2A2D32; border-radius: 2px; }
+
+
+
+  </style>
+
+
+
+</head>
+
+
+
+<body>
+
+
+
+
+
+
+
+<!--  TOP BAR  -->
+
+
+
+<header id="topbar">
+
+
+
+  <div style="display:flex;align-items:center;gap:12px;">
+
+
+
+    <div style="display:flex;gap:3px;align-items:center;">
+
+
+
+      <span style="height:3px;width:22px;background:#5E6AD2;display:block;"></span>
+
+
+
+      <span style="height:3px;width:22px;background:#E4F222;display:block;"></span>
+
+
+
+      <span style="height:3px;width:22px;background:#d97757;display:block;"></span>
+
+
+
+      <span style="height:3px;width:22px;background:#788c5d;display:block;"></span>
+
+
+
+    </div>
+
+
+
+    <span style="font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text-primary);">TechPulse PWA</span>
+
+
+
+    <span style="font-size:10px;font-family:ui-monospace,monospace;color:#3A3D44;display:none;@media(min-width:640px){display:inline;}">&bull;&nbsp;TECHNICAL INTELLIGENCE</span>
+
+
+
+  </div>
+
+
+
+
+
+
+
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+
+
+
+    <div style="display:flex;align-items:center;gap:5px;">
+
+
+
+      <span class="anim-pulse" style="display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--fresh-green);"></span>
+
+
+
+      <span style="font-family:ui-monospace,monospace;font-size:10px;color:var(--text-muted);">LIVE RSS</span>
+
+
+
+    </div>
+
+
+
+    <div class="stream-tabs" style="display:flex;background:#0A0B14;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin:0 10px;">
+
+
+
+      <button class="stream-tab" data-filter="all" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:var(--surface);color:var(--text-primary);border:none;cursor:pointer;">&#9673; All Streams</button>
+
+
+
+      <button class="stream-tab" data-filter="new" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9716; New (&lt;24h)</button>
+
+
+
+      <button class="stream-tab" data-filter="hot" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9832; Hot</button>
+
+
+
+      <button class="stream-tab" data-filter="profile" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9889; My Interests</button>
+
+
+
+    </div>
+
+
+
+    <span id="clock">00:00:00 CEST</span>
+
+
+
+    <button class="pill-btn" id="focus-btn" title="Toggle 3-second takeaway mode"> 3-Sec Focus</button>
+
+
+
+    <button class="pill-btn" id="drawer-open-btn"> Saved <span id="bm-count">0</span></button>
+
+
+
+    <button class="icon-btn" id="settings-open-btn" title="Settings (API Key)"></button>
+
+
+
+  </div>
+
+
+
+</header>
+
+
+
+
+
+
+
+<!--  STATUS BAR  -->
+
+
+
+<div id="statusbar">
+
+
+
+  <span class="stat-item"><span class="stat-val" id="s-total" style="color:#A3A3A3;">0</span> articles</span>
+
+
+
+  <span class="stat-item"><span class="stat-val" id="s-fresh" style="color:var(--fresh-green);">0</span> fresh &lt;6h</span>
+
+
+
+  <span class="stat-item"><span class="stat-val" style="color:var(--accent-blue);">4</span> verticals</span>
+
+
+
+  <span class="stat-item" id="s-read-stat" style="display:none;"><span class="stat-val" id="s-read" style="color:var(--accent-yellow);">0</span> read</span>
+
+
+
+  <span class="stat-item" style="margin-left:auto;color:var(--text-dim);">src: Google News Global Streams</span>
+
+
+
+</div>
+
+
+
+
+
+
+
+<!--  ACTIVE FILTER BAR  -->
+
+
+
+<div id="filterbar">
+
+
+
+  <span class="filter-pill-label">Filtering by</span>
+
+
+
+  <span class="filter-pill">
+
+
+
+    <span id="filter-pill-tag">#tag</span>
+
+
+
+    <button class="filter-pill-x" id="clear-filter" title="Clear filter"></button>
+
+
+
+  </span>
+
+
+
+  <span class="filter-pill-label" id="filter-count-label"></span>
+
+
+
+</div>
+
+
+
+
+
+
+
+<!--  BENTO GRID  -->
+
+
+
+<main style="padding:24px;">
+
+
+
+  <div id="bento-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+
+
+    <!-- 1. Silicon -->
+
+
+
+    <div class="bento-col" id="col-silicon">
+
+
+
+      <div class="section-header">
+
+
+
+        <span class="section-dot" style="background:#5E6AD2"></span>
+
+
+
+        <span class="section-label" style="color:#5E6AD2">Silicon & Microarchitecture</span>
+
+
+
+      </div>
+
+
+
+      <div class="cards-stack" id="stack-silicon">
+
+
+
+        <div class="loading-state">
+
+
+
+          <div style="display:inline-block;width:12px;height:12px;border:2px solid var(--accent-blue);border-top-color:transparent;border-radius:50%;margin-right:8px;vertical-align:middle;" class="anim-spin"></div>
+
+
+
+          Intercepting feed...
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <!-- 2. Software -->
+
+
+
+    <div class="bento-col" id="col-software">
+
+
+
+      <div class="section-header">
+
+
+
+        <span class="section-dot" style="background:#E4F222"></span>
+
+
+
+        <span class="section-label" style="color:#E4F222">Systems & Software Engineering</span>
+
+
+
+      </div>
+
+
+
+      <div class="cards-stack" id="stack-software">
+
+
+
+        <div class="loading-state">
+
+
+
+          <div style="display:inline-block;width:12px;height:12px;border:2px solid var(--accent-blue);border-top-color:transparent;border-radius:50%;margin-right:8px;vertical-align:middle;" class="anim-spin"></div>
+
+
+
+          Intercepting feed...
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <!-- 3. Automation -->
+
+
+
+    <div class="bento-col" id="col-automation">
+
+
+
+      <div class="section-header">
+
+
+
+        <span class="section-dot" style="background:#d97757"></span>
+
+
+
+        <span class="section-label" style="color:#d97757">Enterprise & Local Automation</span>
+
+
+
+      </div>
+
+
+
+      <div class="cards-stack" id="stack-automation">
+
+
+
+        <div class="loading-state">
+
+
+
+          <div style="display:inline-block;width:12px;height:12px;border:2px solid var(--accent-blue);border-top-color:transparent;border-radius:50%;margin-right:8px;vertical-align:middle;" class="anim-spin"></div>
+
+
+
+          Intercepting feed...
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <!-- 4. Markets -->
+
+
+
+    <div class="bento-col" id="col-markets">
+
+
+
+      <div class="section-header">
+
+
+
+        <span class="section-dot" style="background:#788c5d"></span>
+
+
+
+        <span class="section-label" style="color:#788c5d">Macro Tech & Semiconductor Markets</span>
+
+
+
+      </div>
+
+
+
+      <div class="cards-stack" id="stack-markets">
+
+
+
+        <div class="loading-state">
+
+
+
+          <div style="display:inline-block;width:12px;height:12px;border:2px solid var(--accent-blue);border-top-color:transparent;border-radius:50%;margin-right:8px;vertical-align:middle;" class="anim-spin"></div>
+
+
+
+          Intercepting feed...
+
+
+
+        </div>
+
+
+
+      </div>
+
+
+
+    </div>
+
+
+
+  </div>
+
+
+
+</main>
+
+
+
+
+
+
+
+<!--  FOOTER  -->
+
+
+
+<footer style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;">
+
+
+
+  <span style="font-family:ui-monospace,monospace;font-size:10px;color:#2E3138;">
+
+
+
+    TechPulse v0.3 PWA  High-density technical intelligence  Global RSS  AI Powered
+
+
+
+  </span>
+
+
+
+  <div class="flex items-center gap-2 bg-slate-900/90 px-3 py-1 rounded-full border border-slate-800/80 shadow-sm w-fit ml-auto mr-4 my-2"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-[11px] font-mono tracking-widest text-slate-400 font-semibold uppercase">Signal Live</span></div>
+<div class="hidden md:flex items-center gap-4 text-[11px] font-mono text-slate-500 border-t border-slate-900/80 pt-2 px-4">
+  <span>ENG: <strong id="s-engine" class="text-slate-400">READY</strong></span>
+  <span>MEM: <strong id="s-mem" class="text-slate-400">OK</strong></span>
+  <span>SAVED: <strong id="s-saved" class="text-slate-400">0</strong></span>
+</div>
+
+
+
+
+</footer>
+
+
+
+
+
+
+
+<!--  OVERLAYS & MODALS  -->
+
+
+
+<div class="overlay" id="main-overlay"></div>
+
+
+
+
+
+
+
+<!-- Bookmark Drawer -->
+
+
+
+<div id="bookmark-drawer">
+
+
+
+  <div class="drawer-hdr">
+
+
+
+    <span class="drawer-title"> Saved Insights</span>
+
+
+
+    <button class="drawer-x" id="drawer-close"></button>
+
+
+
+  </div>
+
+
+
+  <div id="drawer-list"></div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Settings Modal -->
+<div class="modal-box hidden" id="settings-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border:1px solid var(--border);width:90vw;max-width:600px;z-index:100;flex-direction:column;box-shadow:0 20px 40px rgba(0,0,0,0.5);">
+  <div class="modal-hdr" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface-2);">
+    <span class="modal-title" style="font-size:12px;font-weight:600;color:var(--text-primary);font-family:ui-monospace,monospace;letter-spacing:.05em;">&#9881; Configuration</span>
+    <button class="drawer-x" id="settings-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0;">✕</button>
+  </div>
+  <div class="modal-body" style="padding:20px;overflow-y:auto;font-size:13px;line-height:1.6;color:var(--text-primary);">
+    <p style="color:var(--text-muted);font-size:12px;margin-top:0;">Provide a Gemini API key to enable AI Deep Dives on news articles. Keys are stored entirely locally in your browser's <code style="color:var(--accent-blue)">localStorage</code>.</p>
+    <label style="font-weight:500;font-size:12px;color:var(--text-primary);">Gemini API Key</label>
+    <input type="password" id="gemini-key-input" class="input-field" placeholder="AIzaSy..." style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text-primary);font-family:ui-monospace,monospace;font-size:12px;margin-top:8px;margin-bottom:16px;outline:none;" />
+    
+    <label style="font-weight:500;font-size:12px;color:var(--text-primary);display:block;">My Background & Strategic Focus</label>
+    <input type="text" id="user-profile-input" class="input-field" placeholder="e.g., SystemVerilog, automation, TSMC, AI" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text-primary);font-family:ui-monospace,monospace;font-size:12px;margin-top:8px;margin-bottom:16px;outline:none;" />
+    
+    <button class="btn-primary" id="save-key-btn" style="background:var(--accent-blue);color:#fff;border:none;padding:8px 16px;font-size:12px;font-weight:500;cursor:pointer;">Save Configuration</button>
+    <span id="key-save-status" style="margin-left:10px;font-size:11px;color:var(--fresh-green);display:none;">Saved!</span>
+  </div>
+</div>
+
+<!-- AI Deep Dive Modal -->
+
+
+
+<div class="modal-box" id="ai-modal">
+
+
+
+  <div class="modal-hdr">
+
+
+
+    <span class="modal-title" style="color:var(--accent-blue);"> AI Deep Dive</span>
+
+
+
+    <button class="drawer-x" id="ai-close"></button>
+
+
+
+  </div>
+
+
+
+  <div class="modal-body" id="ai-modal-body">
+
+
+
+    <!-- Dynamic content goes here -->
+
+
+
+  </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<!--  SCRIPT  -->
+
+
+
+<script>
+/* --- State  --- */
+function safeGetJSON(key, defaultVal) {
+  try { return JSON.parse(localStorage.getItem(key)) || defaultVal; } catch(e) { return defaultVal; }
+}
+function safeGet(key, defaultVal) {
+  try { return localStorage.getItem(key) || defaultVal; } catch(e) { return defaultVal; }
+}
+
+let activeStreamMode = 'all';
+
+const state = {
+  readUrls:    new Set(safeGetJSON('techpulse_read_list', [])),
+  bookmarkIds: new Set(safeGetJSON('tp_bookmarks', [])),
+  activeTag:   null,
+  focusMode:   false,
+  apiKey:      safeGet('tp_gemini_key', ''),
+  userProfile: safeGet('techpulse_user_profile', ''),
+  newsData:    [] // Will hold fetched feeds
+};
+
+function trackClick(title) {
+  try {
+    const words = title.toLowerCase().split(/[\s,;-]+/)
+      .map(w => w.replace(/[^a-z0-9]/g, '').trim())
+      .filter(w => w.length >= 4);
+    let history = safeGetJSON('techpulse_click_history', []);
+    history = [...words, ...history].slice(0, 50);
+    localStorage.setItem('techpulse_click_history', JSON.stringify(history));
+  } catch(e) { console.error('trackClick error', e); }
+}
+
+/* --- RSS Config  --- */
+const FEEDS = [
+  { section: 'Silicon & Microarchitecture', key: 'silicon', accent: '#5E6AD2', baseQ: 'semiconductor OR lithography OR TSMC', direct: 'https://spectrum.ieee.org/rss/index.xml' },
+  { section: 'Systems & Software Engineering', key: 'software', accent: '#E4F222', baseQ: '"React Native" OR "WebAssembly"', direct: 'https://lwn.net/river/user?rss=1' },
+  { section: 'Enterprise & Local Automation', key: 'automation', accent: '#d97757', baseQ: '"Home Assistant" OR "Matter protocol"', direct: 'https://www.home-assistant.io/atom.xml' },
+  { section: 'Macro Tech & Semiconductor Markets', key: 'markets', accent: '#788c5d', baseQ: 'semiconductor earnings OR tech capex', direct: 'https://semiwiki.com/feed/' }
+];
+
+function getFeedUrls(feed, mode) {
+  const encBase = encodeURIComponent(feed.baseQ);
+  if (mode === 'all') {
+    return [ feed.direct, `https://news.google.com/rss/search?q=${encBase}+when:3d&hl=en-US&gl=US&ceid=US:en` ];
+  }
+  if (mode === 'new') {
+    return [ feed.direct, `https://news.google.com/rss/search?q=${encBase}+when:24h&hl=en-US&gl=US&ceid=US:en` ];
+  }
+  if (mode === 'hot') {
+    const hotQuery = `("Nvidia" OR "Apple" OR "TSMC" OR "Intel" OR "EUV" OR "OpenAI") AND (${feed.baseQ})`;
+    return [ `https://news.google.com/rss/search?q=${encodeURIComponent(hotQuery)}+when:7d&hl=en-US&gl=US&ceid=US:en` ];
+  }
+  if (mode === 'profile') {
+    const kws = state.userProfile || 'javascript, ai, silicon, automation';
+    const profileQuery = `(${kws}) AND (${feed.baseQ})`;
+    return [ `https://news.google.com/rss/search?q=${encodeURIComponent(profileQuery)}+when:7d&hl=en-US&gl=US&ceid=US:en` ];
+  }
+  return [];
+}
+
+/* --- Persistence  --- */
+const saveRead      = () => localStorage.setItem('techpulse_read_list', JSON.stringify([...state.readUrls]));
+const saveBookmarks = () => localStorage.setItem('tp_bookmarks', JSON.stringify([...state.bookmarkIds]));
+const allArticles   = () => state.newsData.flatMap(s => s.items);
+
+/* --- Fetching Logic  --- */
+
+
+async function fetchAndParseFeed(rssUrl) {
+  try {
+    console.log(`[RSS] Fetching primary JSON for: ${rssUrl}`);
+    const res1 = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(5000) });
+    if (res1.status === 422) throw new Error("HTTP 422 Unprocessable Content");
+    if (res1.ok) {
+      const data = await res1.json();
+      if (data.status === 'ok' && data.items) {
+        return data.items.map(item => ({
+          title: item.title,
+          link: item.link,
+          pubDate: item.pubDate,
+          description: item.description || item.content,
+          source: item.author || 'RSS Feed'
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn(`[RSS] Primary proxy failed for ${rssUrl}, switching to fallback...`, err);
+  }
+
+  // Fallback: AllOrigins /get wrapper (returns { contents: "xml_string" })
+  console.log(`[RSS] Fetching fallback XML for: ${rssUrl}`);
+  const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`, { signal: AbortSignal.timeout(6000) });
+  if (!res2.ok) throw new Error(`Fallback HTTP ${res2.status}`);
+  const wrapper = await res2.json();
+  
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(wrapper.contents, "text/xml");
+  const items = Array.from(xmlDoc.querySelectorAll("item, entry"));
+  if (items.length === 0) throw new Error("No RSS items found in XML");
+  
+  return items.map(item => {
+    const getVal = (tag) => {
+      const el = item.querySelector(tag);
+      if (el && tag === 'link' && el.getAttribute('href')) return el.getAttribute('href');
+      return el ? el.textContent : '';
+    };
+    return {
+      title: getVal('title'),
+      link: getVal('link'),
+      pubDate: getVal('pubDate') || getVal('published') || getVal('updated'),
+      description: getVal('description') || getVal('summary') || getVal('content'),
+      source: getVal('author') || 'RSS Feed'
+    };
+  });
+}
+
+function processItemData(title, link, pubDateText, description, feed) {
+  let temp = document.createElement('div');
+  temp.innerHTML = description || '';
+  const summary = temp.textContent || temp.innerText || '';
+  
+  let titleParts = (title || '').split(' - ');
+  let source = titleParts.length > 1 ? titleParts.pop() : 'Web Source';
+  let cleanTitle = titleParts.join(' - ');
+
+  const pubDate = new Date(pubDateText || new Date());
+  const ageHours = (new Date() - pubDate) / (1000 * 60 * 60);
+  const fresh = ageHours < 6;
+  
+  let timeLabel;
+  if (ageHours < 1) {
+    timeLabel = "Just now";
+  } else if (ageHours < 24) {
+    timeLabel = `${Math.floor(ageHours)}h ago`;
+  } else {
+    const days = Math.floor(ageHours / 24);
+    const remHours = Math.floor(ageHours % 24);
+    timeLabel = remHours === 0 ? `${days}d ago` : `${days}d ${remHours}h ago`;
+  }
+  
+  const id = 'ID_' + btoa(link || 'none').substring(0, 15).replace(/[^a-zA-Z0-9]/g, '');
+
+  const keywords = ['AI', 'TSMC', 'Intel', 'Nvidia', 'AMD', 'Apple', 'Linux', 'React', 'IoT', 'Market', 'Earnings', 'Arm', 'WebAssembly'];
+  let tags = keywords.filter(k => cleanTitle.toLowerCase().includes(k.toLowerCase()));
+  if (tags.length === 0) tags = [feed.section.split(' ')[0]];
+
+  const timestamp = pubDate.getTime() || Date.now();
+
+  let matchCount = 0;
+  let isProfileMatch = false;
+  if (state.userProfile) {
+    const userKws = state.userProfile
+      .toLowerCase()
+      .split(/[\s,;]+/)
+      .map(w => w.trim())
+      .filter(w => w.length >= 3)
+      .map(w => w.length > 4 ? w.replace(/(s|ed|ing|tion|ly)$/, '') : w);
+    
+    const contentToCheck = (cleanTitle + ' ' + summary).toLowerCase();
+    for (const kw of userKws) {
+      if (contentToCheck.includes(kw)) matchCount++;
+    }
+    if (matchCount > 0) isProfileMatch = true;
+  }
+
+  return {
+    id, source, url: link, title: cleanTitle,
+    summary: summary.substring(0, 150) + '...',
+    takeaway: cleanTitle, timeLabel, timestamp, fresh, tags, matchCount, isProfileMatch
+  };
+}
+
+function applyFilter(items, filterType = 'all', userInterests = '') {
+  if (!Array.isArray(items)) return [];
+  
+  const now = new Date().getTime();
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+
+  return items.filter(item => {
+    // Fallback if item date is unparsable: keep it
+    const itemTime = item.pubDate ? new Date(item.pubDate).getTime() : now;
+    const isRecent = !isNaN(itemTime) && (now - itemTime) <= twentyFourHours;
+
+    if (filterType === '24h' || filterType === 'new') {
+      return isRecent;
+    }
+    
+    if (filterType === 'hot') {
+      // Treat items with keywords like 'AI', 'Chip', 'Release', 'Update' or very recent as Hot
+      const hotKeywords = /AI|chip|release|update|launch|tsmc|matter|apple|intel/i;
+      return isRecent || hotKeywords.test(item.title || '');
+    }
+    
+    if (filterType === 'interests' && userInterests.trim() !== '') {
+      const keywords = userInterests.toLowerCase().split(',').map(k => k.trim()).filter(k => k);
+      const titleLower = (item.title || '').toLowerCase();
+      return keywords.some(kw => titleLower.includes(kw));
+    }
+
+    // Default 'all': return everything
+    return true;
+  });
+}
+
+async function fetchColumnWithRetry(feed, colIndex, hasCache, attempt) {
+  const headerElem = document.querySelector(`#col-${feed.key} .section-header`);
+  let retryBadge = headerElem ? headerElem.querySelector('.retry-badge') : null;
+  
+  if (headerElem && attempt > 0) {
+    if (!retryBadge) {
+      retryBadge = document.createElement('span');
+      retryBadge.className = 'retry-badge';
+      retryBadge.style.cssText = 'margin-left:auto;font-size:10px;color:var(--accent-orange);display:flex;align-items:center;gap:4px;';
+      headerElem.appendChild(retryBadge);
+    }
+    retryBadge.innerHTML = `<div style="display:inline-block;width:10px;height:10px;border:2px solid var(--accent-orange);border-top-color:transparent;border-radius:50%;" class="anim-spin"></div> Retrying stream...`;
+  } else if (retryBadge) {
+    retryBadge.remove();
+  }
+
+  let lastError = null;
+
+  try {
+    let success = false;
+    let rawItems = [];
+    let urlsToFetch = [];
+
+    if (Array.isArray(feed)) {
+      urlsToFetch = feed;
+    } else if (feed && typeof feed === 'object') {
+      // 1. Grab the direct RSS URL (e.g., IEEE Spectrum, Home Assistant, LWN):
+      if (feed.direct) urlsToFetch.push(feed.direct);
+      
+      // 2. Grab standard URL property names if they exist:
+      if (Array.isArray(feed.urls)) urlsToFetch.push(...feed.urls);
+      if (Array.isArray(feed.sources)) urlsToFetch.push(...feed.sources);
+      if (feed.url) urlsToFetch.push(feed.url);
+
+      // 3. Construct a fallback Google News RSS stream using baseQ:
+      if (feed.baseQ) {
+        const gNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(feed.baseQ)}&hl=en-US&gl=US&ceid=US:en`;
+        urlsToFetch.push(gNewsUrl);
+      }
+    } else if (typeof feed === 'string') {
+      urlsToFetch = [feed];
+    }
+
+    // Clean, trim, and remove duplicate URLs:
+    urlsToFetch = [...new Set(urlsToFetch.filter(url => typeof url === 'string' && url.trim().length > 0))];
+
+    if (urlsToFetch.length === 0) {
+      console.warn(`[RSS Warning] No valid URLs found for feed object:`, feed);
+      throw new Error("No valid URLs found in feed structure.");
+    }
+
+    for (const url of urlsToFetch) {
+      try {
+        const parsedItems = await fetchAndParseFeed(url);
+        const processed = parsedItems.map(item => {
+          return processItemData(item.title, item.link, item.pubDate, item.description, feed);
+        });
+        if (processed.length > 0) {
+          success = true;
+          rawItems.push(...processed);
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`[RSS] Feed URL failed: ${url}`, err);
+      }
+    }
+    
+    if (!success) {
+      throw lastError || new Error("All feed URLs and proxies failed.");
+    }
+    
+    let items = rawItems.filter(item => {
+      if (!item) return false;
+      const ageInMilliseconds = Date.now() - item.timestamp;
+      return ageInMilliseconds <= 7 * 24 * 60 * 60 * 1000;
+    });
+
+    const spamTerms = ["market analysis", "forecast", "cagr", "size, trends", "industry growth through", "marketbeat", "gurufocus", "zacks", "largest position", "dividend", "share price", "price target", "buy or sell", "$tsm", "$nvda", "$intc", "stock analysis", "etf"];
+    items = items.filter(item => {
+      const t = item.title.toLowerCase();
+      const s = item.source.toLowerCase();
+      return !spamTerms.some(term => t.includes(term) || s.includes(term));
+    });
+
+    items.sort((a, b) => b.timestamp - a.timestamp);
+    items = items.slice(0, 15);
+    
+    let filteredArticles = items;
+    try {
+      const currentTab = window.ACTIVE_TAB || 'all';
+      const savedInterests = localStorage.getItem('techpulse_user_profile') || '';
+      filteredArticles = typeof applyFilter === 'function' 
+        ? applyFilter(items, currentTab, savedInterests) 
+        : items;
+    } catch (filterErr) {
+      console.warn(`[Filter Warning] Could not apply filter, rendering all items:`, filterErr);
+      filteredArticles = items;
+    }
+    
+    if (!state.newsData[colIndex]) {
+      state.newsData[colIndex] = { section: feed.section, colIndex: colIndex, items: [] };
+    }
+    state.newsData[colIndex].items = filteredArticles;
+    localStorage.setItem(`techpulse_cache_col_${colIndex}`, JSON.stringify(filteredArticles));
+    
+    if (retryBadge) retryBadge.remove();
+    updateStatus();
+    if (typeof renderColumns === 'function') renderColumns();
+    
+  } catch (e) {
+    console.error(`[Column Fetch Error - ${feed.section}]:`, e);
+    if (attempt < 3) {
+      setTimeout(() => {
+        fetchColumnWithRetry(feed, colIndex, hasCache, attempt + 1);
+      }, 5000);
+    } else {
+      if (retryBadge) retryBadge.remove();
+      if (!hasCache) {
+        const stack = document.getElementById(`stack-${feed.key}`);
+        if(stack) stack.innerHTML = `<div class="text-xs text-rose-400 font-mono p-4 border border-rose-900/40 rounded bg-rose-950/10" style="margin-top:10px;">⚠️ Failed to load: ${e.message || 'Network/Proxy Timeout'}</div>`;
+      }
+    }
+  }
+}
+
+async function fetchFeeds(forceLive = false) {
+  state.newsData = [];
+  
+  FEEDS.forEach((feed, i) => {
+    const stack = document.getElementById(`stack-${feed.key}`);
+    if (stack) {
+      stack.innerHTML = `
+        <div class="loading-state">
+          <div style="display:inline-block;width:12px;height:12px;border:2px solid var(--accent-blue);border-top-color:transparent;border-radius:50%;margin-right:8px;vertical-align:middle;" class="anim-spin"></div>
+          Intercepting feed...
+        </div>
+      `;
+    }
+  });
+
+  for (let i = 0; i < FEEDS.length; i++) {
+    const feed = FEEDS[i];
+    const cacheKey = `tp_cache_${activeStreamMode}_col_${i}`;
+    const cacheTimeKey = `${cacheKey}_time`;
+    const cachedItems = safeGetJSON(cacheKey, null);
+    const cacheTime = parseInt(safeGet(cacheTimeKey, '0'), 10);
+    const ageMinutes = (Date.now() - cacheTime) / 1000 / 60;
+    
+    if (cachedItems && !forceLive && ageMinutes < 30) {
+      if (!state.newsData[i]) state.newsData[i] = { section: feed.section, colIndex: i, items: [] };
+      state.newsData[i].items = cachedItems;
+      requestAnimationFrame(() => renderColumns());
+      fetchColumnWithRetry(feed, i, true, 0);
+    } else {
+      console.log(`[Staggered Fetch] Starting vertical ${i + 1}/${FEEDS.length}: ${feed.section || feed.key}`);
+      await fetchColumnWithRetry(feed, i, false, 0);
+    }
+    
+    // Wait 400ms before fetching the next column to bypass free proxy rate-limits!
+    if (i < FEEDS.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 400));
+    }
+  }
+}
+
+/* --- Rendering  --- */
+function formatTime(ms) {
+  const diff = Date.now() - ms;
+  const h = Math.floor(diff / 3600000);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  return `${d}d`;
+}
+
+function renderCard(item, accentColor) {
+  const isRead = state.readUrls.has(item.url);
+  const bm = state.bookmarkIds.has(item.url || item.link);
+  const titleClass = isRead ? 'text-slate-500 opacity-60 font-normal' : 'text-slate-200 font-medium';
+  
+  const tagWords = (item.title || "").match(/[A-Z][a-z0-9]+/g) || [];
+  let t1 = tagWords[0] || 'TECH';
+  let t2 = tagWords[1] || 'NEWS';
+  if (t1.length > 8) t1 = t1.substring(0,8);
+  if (t2.length > 8) t2 = t2.substring(0,8);
+
+  const urlObj = new URL(item.url || item.link);
+  const hostname = urlObj.hostname.replace('www.', '');
+  
+  const ageInMs = Date.now() - item.timestamp;
+  const isFresh = ageInMs <= 6 * 60 * 60 * 1000;
+  
+  const saveIcon = bm ? '&#9670;' : '&#9671;';
+  const saveClass = bm ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'text-slate-500';
+
+  return `
+    <article class="flex flex-col gap-2 p-3 border-b border-slate-800/50 hover:bg-slate-900/30 transition-colors relative" data-url="${item.url}">
+      <div class="flex items-center justify-between">
+        <a href="https://${hostname}" target="_blank" rel="noopener noreferrer" class="text-[10px] font-mono font-bold tracking-widest uppercase" style="color:${accentColor}">${hostname}</a>
+        <div class="flex items-center text-[10px] font-mono text-slate-500">
+          ${isFresh ? `<span class="relative inline-flex h-2 w-2 mr-1.5" title="Fresh (<6h)"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span></span>` : ''}
+          ${formatTime(item.timestamp)}
+          <button onclick="toggleSaveArticle('${encodeURIComponent(JSON.stringify(item))}')" class="ml-2.5 text-base leading-none ${saveClass} hover:text-emerald-400 hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] transition-all duration-200 cursor-pointer select-none" title="Save Article">${saveIcon}</button>
+        </div>
+      </div>
+      <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-[13px] ${titleClass} hover:text-white leading-snug">
+        ${item.title}
+      </a>
+      <div class="text-[11px] text-slate-400 leading-relaxed line-clamp-3">
+        ${item.summary || item.description || ''}
+      </div>
+      <div class="flex items-center mt-1">
+        <div class="flex gap-2">
+          <span class="text-[10px] font-mono text-slate-500">#${t1.toUpperCase()}</span>
+          <span class="text-[10px] font-mono text-slate-500">#${t2.toUpperCase()}</span>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function safeSetText(id, text) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.textContent = text;
+  } else {
+    console.warn(`[UI Warning] Tried to update missing DOM element: #${id}`);
+  }
+}
+
+function updateStatus() {
+  safeSetText('s-engine', 'DOM / LIVE');
+  safeSetText('s-mem', (performance.memory ? (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + 'MB' : '---'));
+  updateBookmarkCount();
+}
+
+function updateBookmarkCount() {
+  safeSetText('s-saved', state.bookmarkIds.size);
+}
+
+function renderColumns() {
+  try {
+    const arts = allArticles();
+    if (arts.length > 0) {
+      const renderedRead = arts.filter(a => state.readUrls.has(a.url)).length;
+      safeSetText('s-read', `${renderedRead} / ${arts.length}`);
+    }
+    
+    const stacks = {
+      silicon: document.getElementById('stack-silicon'),
+      software: document.getElementById('stack-software'),
+      automation: document.getElementById('stack-automation'),
+      markets: document.getElementById('stack-markets')
+    };
+
+    FEEDS.forEach(f => { if(stacks[f.key]) stacks[f.key].innerHTML = ''; });
+
+    state.newsData.forEach(colData => {
+      const feed = FEEDS.find(f => f.section === colData.section);
+      if (!feed || !stacks[feed.key]) return;
+      
+      let itemsToRender = colData.items;
+      if (state.activeTag) {
+        itemsToRender = itemsToRender.filter(i => {
+           return i.title.toLowerCase().includes(state.activeTag) || i.summary.toLowerCase().includes(state.activeTag);
+        });
+      }
+
+      itemsToRender.forEach(item => {
+        stacks[feed.key].insertAdjacentHTML('beforeend', renderCard(item, feed.accent));
+      });
+    });
+    updateStatus();
+  } catch(e) { console.error('renderColumns error', e); }
+}
+
+/* --- Drawer & Settings  --- */
+const overlay       = document.getElementById('main-overlay');
+const drawer        = document.getElementById('bookmark-drawer');
+const settingsModal = document.getElementById('settings-modal');
+
+const _el_btn_bookmarks = document.getElementById('drawer-open-btn');
+if (_el_btn_bookmarks) _el_btn_bookmarks.addEventListener('click', () => {
+  drawer.classList.add('is-open');
+  overlay.classList.add('is-open');
+  renderBookmarks();
+});
+const _el_btn_settings = document.getElementById('settings-open-btn');
+if (_el_btn_settings) _el_btn_settings.addEventListener('click', () => {
+  settingsModal.classList.add('is-open');
+  overlay.classList.add('is-open');
+  document.getElementById('gemini-key-input').value = state.apiKey;
+  document.getElementById('user-profile-input').value = state.userProfile;
+});
+
+function closeAllOverlays() {
+  const overlay = document.getElementById('main-overlay');
+  if (overlay) { overlay.classList.remove('is-open'); overlay.style.display = 'none'; }
+  const bDrawer = document.getElementById('bookmark-drawer');
+  if (bDrawer) bDrawer.classList.remove('is-open');
+  const sModal = document.getElementById('settings-modal');
+  if (sModal) { sModal.classList.remove('is-open'); sModal.style.display = 'none'; }
+  const aModal = document.getElementById('ai-modal');
+  if (aModal) { aModal.classList.remove('is-open'); aModal.style.display = 'none'; }
+}
+const _el_drawer_close = document.getElementById('drawer-close');
+if (_el_drawer_close) _el_drawer_close.addEventListener('click', closeAllOverlays);
+const _el_settings_close = document.getElementById('settings-close');
+if (_el_settings_close) _el_settings_close.addEventListener('click', closeAllOverlays);
+if (overlay) overlay.addEventListener('click', closeAllOverlays);
+const _el_ai_close = document.getElementById('ai-close');
+if (_el_ai_close) _el_ai_close.addEventListener('click', closeAllOverlays);
+
+const _el_save_key_btn = document.getElementById('save-key-btn');
+if (_el_save_key_btn) _el_save_key_btn.addEventListener('click', () => {
+  const val = document.getElementById('gemini-key-input').value.trim();
+  const profileVal = document.getElementById('user-profile-input').value.trim();
+  
+  localStorage.setItem('techpulse_api_key', val);
+  localStorage.setItem('techpulse_user_profile', profileVal);
+  
+  state.apiKey = val;
+  state.userProfile = profileVal;
+  
+  const status = document.getElementById('key-save-status');
+  status.style.display = 'inline';
+  setTimeout(() => status.style.display = 'none', 2000);
+});
+
+function renderBookmarks() {
+  const list = document.getElementById('drawer-list');
+  const items = allArticles().filter(a => state.bookmarkIds.has(a.id));
+  if (items.length === 0) {
+    list.innerHTML = `<div style="padding:20px;color:var(--text-muted);font-size:12px;">No insights saved yet.</div>`;
+    return;
+  }
+  list.innerHTML = items.map(a => 
+    `<div style="padding:12px 15px;border-bottom:1px solid var(--border);">
+      <a href="${a.url}" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary);text-decoration:none;font-size:13px;display:block;margin-bottom:6px;">${a.title}</a>
+      <div style="font-size:10px;color:var(--accent-blue);font-family:ui-monospace,monospace;">${new URL(a.url).hostname.replace('www.','')}</div>
+    </div>`
+  ).join('');
+}
+
+/* --- AI Deep Dive  --- */
+async function openAiDeepDive(article) {
+  const modalBody = document.getElementById('ai-modal-body');
+  modalBody.innerHTML = `
+    <h3 style="margin-top:0;font-size:16px;color:#fff;">${article.title}</h3>
+    <div class="dive-loader">
+      <div style="display:inline-block;width:12px;height:12px;border:2px solid var(--accent-blue);border-top-color:transparent;border-radius:50%;" class="anim-spin"></div>
+      ${state.apiKey ? 'Running neural analysis via Gemini 2.0 Flash...' : 'Generating structured breakdown...'}
+    </div>
+  `;
+  document.getElementById('ai-modal').classList.add('is-open');
+  overlay.classList.add('is-open');
+
+  if (!state.apiKey) {
+    setTimeout(() => {
+      modalBody.innerHTML = `
+        <h3 style="margin-top:0;font-size:16px;color:#fff;margin-bottom:16px;"><a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${article.title} &nearr;</a></h3>
+        <div class="dive-section">
+          <h4>Original Snippet</h4>
+          <p style="color:#A3A3A3;font-size:13px;line-height:1.6;">${article.summary}</p>
+        </div>
+        <div style="margin-top:20px;padding:10px;background:#1a1c23;border-radius:4px;font-size:11px;color:var(--text-muted);">
+          <em>Tip: Add a Gemini API key in Settings (&#9881;) to enable AI generated deep dives.</em>
+        </div>
+      `;
+    }, 600);
+    return;
+  }
+
+  try {
+    const profileContext = state.userProfile 
+      ? `User Profile / Background: ${state.userProfile}\n\nTailor your analysis to this profile.`
+      : `User Profile / Background: Standard high-level engineering evaluation.`;
+
+    const prompt = `Act as an elite Staff Engineer / Technical Architect. 
+    Analyze this news article:
+    Title: ${article.title}
+    Snippet: ${article.summary}
+    Source: ${article.source}
+    
+    ${profileContext}
+    
+    Provide a highly technical, zero-fluff breakdown in HTML format (just the inner HTML, no markdown code blocks).
+    Use this exact structure:
+    <div class="dive-section">
+      <h4>&#9889; Signal Score</h4>
+      <p>[Provide a percentage score (0-100%) rating how relevant this specific advancement is to the user's stored profile. Justify it in one sentence.]</p>
+    </div>
+    <div class="dive-section">
+      <h4>Technical Breakdown</h4>
+      <p>[What changed at the low-level architecture, hardware node, or API level. Highly technical, zero-fluff.]</p>
+    </div>
+    <div class="dive-section">
+      <h4>Why It Matters to You</h4>
+      <p>[A personalized strategic takeaway evaluating how this impacts the user's specific development stack, automation projects, or market awareness based on their profile.]</p>
+    </div>`;
+
+    const cleanKey = (state.apiKey || '').trim();
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${cleanKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      const realErrorMessage = errorData.error?.message || `Google HTTP Error ${res.status}: ${res.statusText}`;
+      throw new Error(realErrorMessage);
+    }
+    
+    const data = await res.json();
+    let htmlContent = data.candidates[0].content.parts[0].text;
+    htmlContent = htmlContent.replace(/```html/g, '').replace(/```/g, '');
+
+    modalBody.innerHTML = `
+      <h3 style="margin-top:0;font-size:16px;color:#fff;margin-bottom:16px;"><a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${article.title} &nearr;</a></h3>
+      ${htmlContent}
+    `;
+  } catch (err) {
+    let errorBadge = `
+      <div style="color:#ef4444;margin-top:20px;background:#2a1215;padding:12px;border:1px solid #7f1d1d;border-radius:4px;">
+        <strong>API Error:</strong> ${err.message}
+      </div>
+    `;
+
+    modalBody.innerHTML = `
+      <h3 style="margin-top:0;font-size:16px;color:#fff;margin-bottom:16px;"><a href="${article.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;">${article.title} &nearr;</a></h3>
+      <div class="dive-section">
+        <h4>Original Snippet</h4>
+        <p style="color:#A3A3A3;font-size:13px;line-height:1.6;">${article.summary}</p>
+      </div>
+      ${errorBadge}
+    `;
+  }
+}
+
+/*  Event delegation (grid)  */
+document.addEventListener('click', e => {
+  const modeBtn = e.target.closest('.mode-tab');
+  if (modeBtn) {
+    try {
+      document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('is-active'));
+      modeBtn.classList.add('is-active');
+      activeStreamMode = modeBtn.dataset.mode;
+      fetchFeeds(true);
+    } catch(err) { console.error('Mode switch error', err); }
+  }
+});
+
+const _el_bento_grid = document.getElementById('bento-grid');
+if (_el_bento_grid) _el_bento_grid.addEventListener('click', e => {
+  // Bookmark toggle
+  const bmBtn = e.target.closest('.bookmark-btn');
+  if (bmBtn) {
+    e.preventDefault(); e.stopPropagation();
+    const id = bmBtn.dataset.id;
+    state.bookmarkIds.has(id) ? state.bookmarkIds.delete(id) : state.bookmarkIds.add(id);
+    saveBookmarks();
+    const bm = state.bookmarkIds.has(id);
+    bmBtn.classList.toggle('is-bookmarked', bm);
+    bmBtn.innerHTML = bm ? '&#9733;' : '&#9734;';
+    bmBtn.title = bm ? 'Remove bookmark' : 'Save insight';
+    updateBookmarkCount();
+    return;
+  }
+
+  // Tag filter
+  const tagBtn = e.target.closest('.tag-btn');
+  if (tagBtn) {
+    e.preventDefault(); e.stopPropagation();
+    const tag = tagBtn.dataset.tag;
+    state.activeTag = state.activeTag === tag ? null : tag;
+    renderColumns();
+    return;
+  }
+
+  // Title Link (Mark as read, let browser open link)
+  const titleLink = e.target.closest('.card-title-link');
+  if (titleLink) {
+    trackClick(titleLink.textContent);
+    const url = titleLink.dataset.url;
+    if (url && !state.readUrls.has(url)) {
+      state.readUrls.add(url);
+      saveRead();
+      requestAnimationFrame(() => renderColumns());
+    }
+    return;
+  }
+
+  // Card Body Click -> AI Deep Dive
+  const card = e.target.closest('.news-card');
+  if (card) {
+    const url = card.dataset.url;
+    const id = card.dataset.id;
+    const article = allArticles().find(a => a.id === id);
+    if (article) {
+      trackClick(article.title);
+      // Mark as read implicitly
+      if (!state.readUrls.has(url)) {
+        state.readUrls.add(url);
+        saveRead();
+        requestAnimationFrame(() => renderColumns());
+      }
+      // Open AI modal
+      openAiDeepDive(article);
+    }
+  }
+});
+
+/* --- Header controls  --- */
+const _el_focus_btn = document.getElementById('focus-btn');
+if (_el_focus_btn) _el_focus_btn.addEventListener('click', () => {
+  state.focusMode = !state.focusMode;
+  document.body.classList.toggle('focus-mode', state.focusMode);
+  document.getElementById('focus-btn').classList.toggle('is-active', state.focusMode);
+});
+
+const _el_clear_filter = document.getElementById('clear-filter');
+if (_el_clear_filter) _el_clear_filter.addEventListener('click', () => {
+  state.activeTag = null;
+  renderColumns();
+});
+
+/* --- Spain timezone clock  --- */
+function updateClock() {
+  const now = new Date();
+  const timeStr = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  }).format(now);
+  const tzParts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Madrid', timeZoneName: 'short'
+  }).formatToParts(now);
+  const tzLabel = (tzParts.find(p => p.type === 'timeZoneName') || {}).value || 'CEST';
+  document.getElementById('clock').textContent = `${timeStr} ${tzLabel}`;
+}
+
+/* --- Init  --- */
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    updateClock();
+    setInterval(updateClock, 1000);
+  } catch (e) {
+    console.error("Clock Init Failed", e);
+  }
+  fetchFeeds(); // Boot up live data
+});
+</script>
+
+</body>
+</html>
