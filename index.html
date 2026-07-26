@@ -1727,9 +1727,17 @@ function processItemData(title, link, pubDateText, description, feed) {
   temp.innerHTML = description || '';
   const summary = temp.textContent || temp.innerText || '';
   
-  let titleParts = (title || '').split(' - ');
-  let source = titleParts.length > 1 ? titleParts.pop() : 'Web Source';
-  let cleanTitle = titleParts.join(' - ');
+  let cleanTitle = title || "No Title";
+  let realSource = (feed && (feed.name || feed.key)) ? (feed.name || feed.key) : "TECHPULSE";
+
+  if (/google|rss|allorigins/i.test(realSource) || realSource === "TECHPULSE") {
+    const parts = cleanTitle.split(/ - | – /);
+    if (parts.length > 1) {
+      realSource = parts.pop().trim();
+      cleanTitle = parts.join(" - ").trim();
+    }
+  }
+  let source = realSource.toUpperCase();
 
   const pubDate = new Date(pubDateText || new Date());
   const ageHours = (new Date() - pubDate) / (1000 * 60 * 60);
@@ -1867,13 +1875,15 @@ async function fetchColumnWithRetry(feed, colIndex, hasCache, attempt) {
         const processed = parsedItems.map(item => {
           return processItemData(item.title, item.link, item.pubDate, item.description, feed);
         });
-        if (processed.length > 0) {
+        if (processed && processed.length > 0) {
+          rawItems = rawItems.concat(processed);
           success = true;
-          rawItems.push(...processed);
+          break; // Successfully loaded from this URL, no need to check further backups!
         }
-      } catch (err) {
-        lastError = err;
-        console.warn(`[RSS] Feed URL failed: ${url}`, err);
+      } catch (urlErr) {
+        lastError = urlErr;
+        console.warn(`[Backup Switch] Failed fetching ${url}, trying next backup...`, urlErr);
+        continue; // Keep looping to the next backup URL!
       }
     }
     
@@ -1989,11 +1999,11 @@ function renderCard(item, accentColor) {
   const bm = state.bookmarkIds.has(item.url || item.link);
   const titleClass = isRead ? 'text-slate-500 opacity-60 font-normal' : 'text-slate-200 font-medium';
   
-  const tagWords = (item.title || "").match(/[A-Z][a-z0-9]+/g) || [];
+  const tagWords = item.tags && item.tags.length > 0 ? item.tags : ['TECH', 'NEWS'];
   let t1 = tagWords[0] || 'TECH';
   let t2 = tagWords[1] || 'NEWS';
-  if (t1.length > 8) t1 = t1.substring(0,8);
-  if (t2.length > 8) t2 = t2.substring(0,8);
+  if (t1.length > 12) t1 = t1.substring(0,12);
+  if (t2.length > 12) t2 = t2.substring(0,12);
 
   const urlObj = new URL(item.url || item.link);
   const hostname = urlObj.hostname.replace('www.', '');
@@ -2022,8 +2032,8 @@ function renderCard(item, accentColor) {
       </div>
       <div class="flex items-center mt-1">
         <div class="flex gap-2">
-          <span class="text-[10px] font-mono text-slate-500">#${t1.toUpperCase()}</span>
-          <span class="text-[10px] font-mono text-slate-500">#${t2.toUpperCase()}</span>
+          <span onclick="filterByTag('${t1.toLowerCase()}')" class="cursor-pointer text-[10px] font-mono text-slate-400 hover:text-emerald-400 hover:underline transition-all mr-2 select-none">#${t1.toUpperCase()}</span>
+          ${tagWords.length > 1 ? `<span onclick="filterByTag('${t2.toLowerCase()}')" class="cursor-pointer text-[10px] font-mono text-slate-400 hover:text-emerald-400 hover:underline transition-all mr-2 select-none">#${t2.toUpperCase()}</span>` : ''}
         </div>
       </div>
     </article>
