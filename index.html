@@ -1608,18 +1608,22 @@
 
 <script>
 
+window.CURRENT_ARTICLES_MAP = window.CURRENT_ARTICLES_MAP || {};
+
 // 1. GLOBAL SAVE HANDLER (Must be defined at top!)
-window.toggleSaveArticle = function(itemStr) {
+window.toggleSaveByUrl = function(encodedLink) {
   try {
-    const item = JSON.parse(decodeURIComponent(itemStr));
+    const link = decodeURIComponent(encodedLink);
+    const item = window.CURRENT_ARTICLES_MAP[link];
+    if (!item) return;
     let saved = JSON.parse(localStorage.getItem('techpulse_saved') || '[]');
-    const existsIdx = saved.findIndex(s => (s.url || s.link) === (item.url || item.link));
+    const existsIdx = saved.findIndex(s => (s.url || s.link) === link);
     if (existsIdx > -1) {
       saved.splice(existsIdx, 1);
-      state.bookmarkIds.delete(item.url || item.link);
+      state.bookmarkIds.delete(link);
     } else {
       saved.push(item);
-      state.bookmarkIds.add(item.url || item.link);
+      state.bookmarkIds.add(link);
     }
     localStorage.setItem('techpulse_saved', JSON.stringify(saved));
     const savedCounter = document.getElementById('s-saved');
@@ -1630,7 +1634,7 @@ window.toggleSaveArticle = function(itemStr) {
     if (typeof renderColumns === 'function') {
       renderColumns();
     }
-  } catch (e) { console.error("Error saving article:", e); }
+  } catch (e) { console.error("Save click error:", e); }
 };
 
 // 2. GLOBAL TAG FILTER HANDLER
@@ -2109,6 +2113,8 @@ function renderCard(item, accentColor) {
   const saveIcon = bm ? '&#9670;' : '&#9671;';
   const saveClass = bm ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'text-slate-500';
 
+  window.CURRENT_ARTICLES_MAP[item.url || item.link] = item;
+
   return `
     <article class="flex flex-col gap-2 p-3 border-b border-slate-800/50 hover:bg-slate-900/30 transition-colors relative" data-url="${item.url}">
       <div class="flex items-center justify-between">
@@ -2116,7 +2122,7 @@ function renderCard(item, accentColor) {
         <div class="flex items-center text-[10px] font-mono text-slate-500">
           ${isFresh ? `<span class="relative inline-flex h-2 w-2 mr-1.5" title="Fresh (<6h)"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span></span>` : ''}
           ${formatTime(item.timestamp)}
-          <button onclick="toggleSaveArticle('${encodeURIComponent(JSON.stringify(item)).replace(/'/g, '%27')}')" class="ml-2.5 text-base leading-none ${saveClass} hover:text-emerald-400 hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] transition-all duration-200 cursor-pointer select-none" title="Save Article">${saveIcon}</button>
+          <button onclick="window.toggleSaveByUrl('${encodeURIComponent(item.url || item.link)}')" class="ml-2.5 text-base leading-none ${saveClass} hover:text-emerald-400 hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] transition-all duration-200 cursor-pointer select-none" title="Save Article">${saveIcon}</button>
         </div>
       </div>
       <a href="${item.url || item.link}" target="_blank" rel="noopener noreferrer" class="text-sm ${titleClass} hover:text-emerald-400 transition-colors leading-snug block my-1.5">${cleanTitle}</a>
