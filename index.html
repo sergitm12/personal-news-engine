@@ -1088,19 +1088,19 @@
 
 
 
-      <button class="stream-tab" data-filter="all" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:var(--surface);color:var(--text-primary);border:none;cursor:pointer;">&#9673; All Streams</button>
+      <button class="stream-tab" data-filter="all" onclick="window.switchTab('all')" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:var(--surface);color:var(--text-primary);border:none;cursor:pointer;">&#9673; All Streams</button>
 
 
 
-      <button class="stream-tab" data-filter="new" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9716; New (&lt;24h)</button>
+      <button class="stream-tab" data-filter="new" onclick="window.switchTab('new')" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9716; New (&lt;24h)</button>
 
 
 
-      <button class="stream-tab" data-filter="hot" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9832; Hot</button>
+      <button class="stream-tab" data-filter="hot" onclick="window.switchTab('hot')" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9832; Hot</button>
 
 
 
-      <button class="stream-tab" data-filter="profile" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9889; My Interests</button>
+      <button class="stream-tab" data-filter="profile" onclick="window.switchTab('profile')" style="font-size:10px;font-family:ui-monospace,monospace;padding:5px 10px;background:transparent;color:var(--text-muted);border:none;cursor:pointer;">&#9889; My Interests</button>
 
 
 
@@ -1638,6 +1638,43 @@ window.toggleSaveByUrl = function(encodedLink) {
 };
 
 // 2. GLOBAL TAG FILTER HANDLER
+
+// 3. GLOBAL TAB SWITCH HANDLER
+window.switchTab = function(tabType) {
+  // Update UI buttons
+  const buttons = document.querySelectorAll('.stream-tab');
+  buttons.forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text-muted)';
+  });
+  const activeBtn = document.querySelector(`.stream-tab[data-filter="${tabType}"]`);
+  if (activeBtn) {
+    activeBtn.style.background = 'var(--surface)';
+    activeBtn.style.color = 'var(--text-primary)';
+  }
+  
+  window.ACTIVE_TAB = tabType;
+  window.ACTIVE_TAG_QUERY = ''; // Reset tag filter
+  
+  const savedInterests = localStorage.getItem('techpulse_user_profile') || '';
+  
+  for (let colIndex = 0; colIndex < 4; colIndex++) {
+    const cacheRaw = localStorage.getItem(`techpulse_cache_col_${colIndex}`);
+    if (cacheRaw) {
+      const rawItems = JSON.parse(cacheRaw);
+      let filtered = rawItems;
+      try {
+        filtered = typeof applyFilter === 'function' ? applyFilter(rawItems, window.ACTIVE_TAB, savedInterests) : rawItems;
+      } catch(e){}
+      if (!state.newsData[colIndex]) {
+         state.newsData[colIndex] = { items: [] };
+      }
+      state.newsData[colIndex].items = filtered;
+    }
+  }
+  if (typeof renderColumns === 'function') renderColumns();
+};
+
 window.filterByTag = function(tag) {
   window.ACTIVE_TAB = 'tag';
   window.ACTIVE_TAG_QUERY = tag.toLowerCase();
