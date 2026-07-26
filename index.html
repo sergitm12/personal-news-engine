@@ -1607,6 +1607,64 @@
 
 
 <script>
+
+// 1. GLOBAL SAVE HANDLER (Must be defined at top!)
+window.toggleSaveArticle = function(itemStr) {
+  try {
+    const item = JSON.parse(decodeURIComponent(itemStr));
+    let saved = JSON.parse(localStorage.getItem('techpulse_saved') || '[]');
+    const existsIdx = saved.findIndex(s => (s.url || s.link) === (item.url || item.link));
+    if (existsIdx > -1) {
+      saved.splice(existsIdx, 1);
+      state.bookmarkIds.delete(item.url || item.link);
+    } else {
+      saved.push(item);
+      state.bookmarkIds.add(item.url || item.link);
+    }
+    localStorage.setItem('techpulse_saved', JSON.stringify(saved));
+    const savedCounter = document.getElementById('s-saved');
+    if (savedCounter) savedCounter.textContent = saved.length;
+    const bmCounter = document.getElementById('bm-count');
+    if (bmCounter) bmCounter.textContent = saved.length;
+    // Re-render columns to update rhomboid glow
+    if (typeof renderColumns === 'function') {
+      renderColumns();
+    }
+  } catch (e) { console.error("Error saving article:", e); }
+};
+
+// 2. GLOBAL TAG FILTER HANDLER
+window.filterByTag = function(tag) {
+  window.ACTIVE_TAB = 'tag';
+  window.ACTIVE_TAG_QUERY = tag.toLowerCase();
+  
+  // Apply filter to cached articles immediately
+  const savedInterests = localStorage.getItem('techpulse_user_profile') || '';
+  for (let colIndex = 0; colIndex < 4; colIndex++) {
+    const cacheRaw = localStorage.getItem(`techpulse_cache_col_${colIndex}`);
+    if (cacheRaw) {
+      const rawItems = JSON.parse(cacheRaw);
+      let filtered = rawItems;
+      try {
+        filtered = rawItems.filter(item => {
+          if (!item) return false;
+          const content = ((item.title||'') + ' ' + (item.summary||'')).toLowerCase();
+          const itemTags = (item.tags || []).map(t => t.toLowerCase());
+          return content.includes(tag.toLowerCase()) || itemTags.includes(tag.toLowerCase());
+        });
+      } catch(e){}
+      if (!state.newsData[colIndex]) {
+         state.newsData[colIndex] = { items: [] };
+      }
+      state.newsData[colIndex].items = filtered;
+    }
+  }
+  
+  if (typeof renderColumns === 'function') {
+    renderColumns();
+  }
+};
+
 /* --- State  --- */
 function safeGetJSON(key, defaultVal) {
   try { return JSON.parse(localStorage.getItem(key)) || defaultVal; } catch(e) { return defaultVal; }
@@ -1854,7 +1912,8 @@ async function fetchColumnWithRetry(feed, colIndex, hasCache, attempt) {
 
       // 3. Construct a fallback Google News RSS stream using baseQ:
       if (feed.baseQ) {
-        const gNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(feed.baseQ)}&hl=en-US&gl=US&ceid=US:en`;
+        const cleanQ = feed.baseQ.replace(/"/g, '');
+        const gNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(cleanQ)}&hl=en-US&gl=US&ceid=US:en`;
         urlsToFetch.push(gNewsUrl);
       }
     } else if (typeof feed === 'string') {
