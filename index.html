@@ -1709,7 +1709,16 @@ const FEEDS = [
       'https://news.google.com/rss/search?q=React+Native+OR+WebAssembly+OR+Linux+kernel&hl=en-US&gl=US&ceid=US:en'
     ]
   },
-  { section: 'Enterprise & Local Automation', key: 'automation', accent: '#d97757', baseQ: '"Home Assistant" OR "Matter protocol"', direct: 'https://www.home-assistant.io/atom.xml' },
+  {
+  section: 'Tech Stocks & Financial Markets',
+  key: 'markets_finance',
+  accent: '#d97757',
+  urls: [
+    'https://news.google.com/rss/search?q=semiconductor+stocks+OR+NVIDIA+earnings+OR+TSMC+stock+OR+AI+capex&hl=en-US&gl=US&ceid=US:en',
+    'https://finance.yahoo.com/news/rssindex',
+    'https://news.google.com/rss/search?q=NASDAQ+tech+stocks+OR+semiconductor+investing&hl=en-US&gl=US&ceid=US:en'
+  ]
+},
   { section: 'Macro Tech & Semiconductor Markets', key: 'markets', accent: '#788c5d', baseQ: 'semiconductor earnings OR tech capex', direct: 'https://semiwiki.com/feed/' }
 ];
 
@@ -1789,13 +1798,13 @@ async function fetchAndParseFeed(rssUrl) {
   });
 }
 
-function processItemData(title, link, pubDateText, description, feed) {
+function processItemData(title, link, pubDateText, description, feed, sourceName) {
   let temp = document.createElement('div');
   temp.innerHTML = description || '';
   const summary = temp.textContent || temp.innerText || '';
   
   let cleanTitle = title || "No Title";
-  let realSource = (feed && (feed.name || feed.key)) ? (feed.name || feed.key) : "TECHPULSE";
+  let realSource = sourceName ? sourceName : ((feed && (feed.name || feed.key)) ? (feed.name || feed.key) : "TECHPULSE");
 
   if (/google|rss|allorigins/i.test(realSource) || realSource === "TECHPULSE") {
     const parts = cleanTitle.split(/ - | – /);
@@ -1941,7 +1950,7 @@ async function fetchColumnWithRetry(feed, colIndex, hasCache, attempt) {
       try {
         const parsedItems = await fetchAndParseFeed(url);
         const processed = parsedItems.map(item => {
-          return processItemData(item.title, item.link, item.pubDate, item.description, feed);
+          return processItemData(item.title, item.link, item.pubDate, item.description, feed, item.source);
         });
         if (processed && processed.length > 0) {
           rawItems = rawItems.concat(processed);
@@ -2082,7 +2091,7 @@ function formatCardDisplay(title, source) {
 function renderCard(item, accentColor) {
   const isRead = state.readUrls.has(item.url);
   const bm = state.bookmarkIds.has(item.url || item.link);
-  const titleClass = isRead ? 'text-slate-500 opacity-60 font-normal' : 'text-slate-200 font-medium';
+  const titleClass = isRead ? 'text-slate-500 opacity-60 font-normal' : 'text-white font-bold';
   const { cleanTitle, displaySource } = formatCardDisplay(item.title, item.source);
   
   const tagWords = item.tags && item.tags.length > 0 ? item.tags : ['TECH', 'NEWS'];
@@ -2107,7 +2116,7 @@ function renderCard(item, accentColor) {
         <div class="flex items-center text-[10px] font-mono text-slate-500">
           ${isFresh ? `<span class="relative inline-flex h-2 w-2 mr-1.5" title="Fresh (<6h)"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span></span>` : ''}
           ${formatTime(item.timestamp)}
-          <button onclick="toggleSaveArticle('${encodeURIComponent(JSON.stringify(item))}')" class="ml-2.5 text-base leading-none ${saveClass} hover:text-emerald-400 hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] transition-all duration-200 cursor-pointer select-none" title="Save Article">${saveIcon}</button>
+          <button onclick="toggleSaveArticle('${encodeURIComponent(JSON.stringify(item)).replace(/'/g, '%27')}')" class="ml-2.5 text-base leading-none ${saveClass} hover:text-emerald-400 hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.9)] transition-all duration-200 cursor-pointer select-none" title="Save Article">${saveIcon}</button>
         </div>
       </div>
       <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-[13px] ${titleClass} hover:text-white leading-snug">
